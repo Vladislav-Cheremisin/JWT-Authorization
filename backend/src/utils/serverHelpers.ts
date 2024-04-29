@@ -2,6 +2,7 @@ import express from "express";
 import mongoose from "mongoose";
 import * as core from "express-serve-static-core";
 import { SERVER_MSGS } from "./langConstants.js";
+import { dbOperationResult, isErrorObject } from "./types.js";
 
 /**
  * Подключиться к базе данных MongoDB
@@ -27,12 +28,29 @@ const connectToDatabase = (uri: string): mongoose.Connection => {
 const runServer = (port: number): core.Express => {
   const app = express();
 
+  app.use(express.json());
   app.listen(port, () => console.log(SERVER_MSGS.serverStartSuccess));
 
   return app;
 }
 
+/**
+ * Обработать ошибку полученную при запросе (для catch блоков)
+ * @param err ошибка сервера.
+ * @returns возвращает структуру соответствующую типу результата операции.
+ */
+const handleRequestErr = (err: unknown): dbOperationResult => {
+  return {
+    isSuccess: false,
+    statusCode: 500,
+    message: isErrorObject(err)
+      ? err.message
+      : SERVER_MSGS.requestError,
+  }
+}
+
 export {
+  handleRequestErr,
   connectToDatabase,
   runServer,
 }
