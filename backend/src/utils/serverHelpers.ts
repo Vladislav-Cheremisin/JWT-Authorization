@@ -1,5 +1,6 @@
 import express from "express";
 import mongoose from "mongoose";
+import * as core from "express-serve-static-core";
 import { SERVER_MSGS } from "./langConstants.js";
 
 /**
@@ -23,7 +24,7 @@ const connectToDatabase = (uri: string): mongoose.Connection => {
  * @param port порт на котором сервер будет запущен
  * @returns экземпляр сервера Express
  */
-const runServer = (port: number) => {
+const runServer = (port: number): core.Express => {
   const app = express();
 
   app.listen(port, () => console.log(SERVER_MSGS.serverStartSuccess));
