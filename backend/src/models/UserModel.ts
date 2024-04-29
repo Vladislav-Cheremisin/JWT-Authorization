@@ -3,9 +3,10 @@ import { IUser, IUserMethods, UserModel } from "./types.js";
 import { dbOperationResult } from "../utils/types.js";
 import { handleRequestErr } from "../utils/serverHelpers.js";
 import { USER_MSGS } from "../utils/langConstants.js";
+import * as bcrypt from "bcrypt";
 
 const UserSchema = new Schema<IUser, UserModel, IUserMethods>({
-  login: { type: String, required: true },
+  login: { type: String, required: true, unique: true },
   password: { type: String, required: true },
 });
 
@@ -15,12 +16,16 @@ UserSchema.method(
     try {
       const existedUser = await User.findOne({ login: this.login });
 
-      if (existedUser && existedUser.password === this.password) {
-        return {
-          isSuccess: true,
-          statusCode: 200,
-          message: USER_MSGS.loginSuccess
-        };
+      if (existedUser) {
+        const isPwdCorrect = await bcrypt.compare(this.password, existedUser.password);
+
+        if (isPwdCorrect) {
+          return {
+            isSuccess: true,
+            statusCode: 200,
+            message: USER_MSGS.loginSuccess
+          };
+        }
       }
 
       return {
@@ -47,7 +52,12 @@ UserSchema.method(
         };
       }
 
-      await User.create(this);
+      const hashedPwd = await bcrypt.hash(this.password, 8);
+
+      await User.create({
+        login: this.login,
+        password: hashedPwd,
+      });
 
       return {
         isSuccess: true,
