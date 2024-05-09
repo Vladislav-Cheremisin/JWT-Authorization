@@ -1,23 +1,30 @@
 import { HydratedDocument, Model } from "mongoose";
-import { dbOperationResult } from "../utils/types.js";
+import { DefaultResponse, UserTokensResponse } from "../types/api/responses.js";
+import { UserTokensPayload } from "../types/api/payloads.js";
 
 interface IUser {
   login: string,
   password: string,
+  refreshTokenHash?: string,
 }
 
 interface IUserMethods {
-  signIn: () => Promise<dbOperationResult>,
-  register: () => Promise<dbOperationResult>,
+  register: () => Promise<DefaultResponse>,
+  signIn: () => Promise<UserTokensResponse>,
+  signOut: () => Promise<DefaultResponse>,
+  getTokenPair: (userId: string) => UserTokensPayload,
+  updateRefreshHash: (refreshToken: string) => void,
 }
 
-type UserModel = Model<IUser, {}, IUserMethods>;
+interface UserModel extends Model<IUser, {}, IUserMethods> {
+  refresh: (token: string) => Promise<UserTokensResponse | DefaultResponse>,
+}
 
-type newUser = HydratedDocument<IUser, IUserMethods>
+type NewUser = HydratedDocument<IUser, IUserMethods>
 
 export {
   IUser,
   IUserMethods,
   UserModel,
-  newUser,
+  NewUser,
 };
